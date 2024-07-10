@@ -1,6 +1,8 @@
+# Traffic
+Traffic is neural network bult using tensor flow that can classify road signs based on images of these road signs. It is trained using the GTSRB data set. <<br>
+The model generated in the program can classify road signs with 99% accuracy. The process to get to this accuracy is provided below:
 
-
-### I have returned once again. All of the below is using the gtsrb dataset, relu activiation for the hidden layer, soft max for the output layer and the following compiler: model.compiler(optimizer='adam'loss='categorical_crossentropy',metrics=['accuracy'])
+#### All of the below is using the gtsrb dataset, relu activiation for the hidden layer, soft max for the output layer and the following compiler: model.compiler(optimizer='adam'loss='categorical_crossentropy',metrics=['accuracy'])
 
 10 epoch:
     0.5 dropout:
@@ -30,7 +32,7 @@ Normalize pixel values to [0, 1]:
 
 reason for improvemnet is explained here: https://stackoverflow.com/questions/62111708/what-is-the-significance-of-normalization-of-data-before-feeding-it-to-a-ml-dl-m
 
-### From now on, the normilizing of pixel values and 20 epochs is included on all tests 
+#### From now on, the normilizing of pixel values and 20 epochs is included on all tests 
 
 returning to test without cross validiation for time saving purposes.
 seeds set:
@@ -54,7 +56,7 @@ cross validation:
                 1 conv with 32 filters and 2,2 pooling layers:
                     1 dense hidden layer with 256 units: average of 98% across 5 folds
 
-### 256 untis seems not to make any difference
+#### 256 untis seems not to make any difference
 
 cross validation:
         20 epoch:
@@ -63,7 +65,7 @@ cross validation:
                     1 dense hidden layer with 128 units
                     and another dense hidden layer with 128 units: 97 to 98 average across 5 folds
 
-### it seems modifying the hidden layers has no much difference, so I will return to 1 hidden layer with 256 units
+#### it seems modifying the hidden layers has no much difference, so I will return to 1 hidden layer with 256 units
 
 cross validation:
         20 epoch:
@@ -77,7 +79,7 @@ cross validation:
                 1 conv with 32 filters and 2,2 pooling layers:
                     1 dense hidden layer with 128 units:average of 98% across 5 folds
 
-### it also seems that dropout does not make that difference, I will start playing with the conv layers
+#### it also seems that dropout does not make that difference, I will start playing with the conv layers
 
 cross validation:
         20 epoch:
@@ -85,7 +87,7 @@ cross validation:
                 2 conv with 32 filters and 2 with 2,2 pooling layers:
                     1 dense hidden layer with 128 units: finally average of 99% across 5 folds
 
-### I will stop here, here is what to conclude: changing the hidden layers and dropout did not make any difference. normilzing the pixel values made a huge differnce by ropugly 2 or 3% and got rid of the sudden 50% accuracy. adding another conv layer made the jump to 99%.
+#### I will stop here, here is what to conclude: changing the hidden layers and dropout did not make any difference. normilzing the pixel values made a huge differnce by ropugly 2 or 3% and got rid of the sudden 50% accuracy. adding another conv layer made the jump to 99%.
                 
     
 
