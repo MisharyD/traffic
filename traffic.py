@@ -6,15 +6,16 @@ import tensorflow as tf
 import keras
 from keras import layers
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-EPOCHS = 10
+EPOCHS = 20
 IMG_WIDTH = 30
 IMG_HEIGHT = 30
 NUM_CATEGORIES = 3
 TEST_SIZE = 0.4
+K_FOLDS = 5
 
 
 def main():
@@ -23,32 +24,70 @@ def main():
     if len(sys.argv) not in [2, 3]:
         sys.exit("Usage: python traffic.py data_directory [model.h5]")
 
+    #for reproducibility
+    np.random.seed(1)
+    tf.random.set_seed(2)
+
     # Get image arrays and labels for all image files
     images, labels = load_data(sys.argv[1])
 
-    # Split data into training and testing sets
     labels = keras.utils.to_categorical(labels)
-    x_train, x_test, y_train, y_test = train_test_split(
-        np.array(images), np.array(labels), test_size=TEST_SIZE
-    )
 
-    # Get a compiled neural network
-    model = get_model()
+    #using cross validation
+    
+    # Initialize KFold
+    kf = KFold(n_splits=K_FOLDS, shuffle=True, random_state=1)
 
-    # Fit model on training data
-    model.fit(x_train, y_train, epochs=EPOCHS)
+    fold_index = 0
+    results = []
 
-    # Evaluate neural network performance
-    model.evaluate(x_test,  y_test, verbose=2)
+    # Perform K-fold cross-validation
+    for train_index, val_index in kf.split(images):
+        fold_index += 1
+        print(f"Training on fold {fold_index}/{K_FOLDS}...")
 
-    # Save model to file
-    if len(sys.argv) == 3:
-        filename = sys.argv[2]
-        model.save(filename)
-        print(f"Model saved to {filename}.")
+        # Split data into training and validation sets
+        x_train, x_test = images[train_index], images[val_index]
+        y_train, y_test = labels[train_index], labels[val_index]
+
+        # Get a compiled neural network
+        model = get_model()
+
+        # Fit model on training data
+        model.fit(x_train, y_train, epochs=EPOCHS)
+
+        # Evaluate neural network performance on validation set
+        _, accuracy = model.evaluate(x_test, y_test, verbose=2)
+        results.append(accuracy)
+
+    # Calculate average performance across all folds
+    avg_accuracy = np.mean(results)
+    print(f"Average validation accuracy across {K_FOLDS} folds: {avg_accuracy}")
+
+    # without cross validation
+
+    # # Split data into training and testing sets
+    # x_train, x_test, y_train, y_test = train_test_split(
+    #     np.array(images), np.array(labels), test_size=TEST_SIZE,
+    # )
+
+    # # Get a compiled neural network
+    # model = get_model()
+
+    # # Fit model on training data
+    # model.fit(x_train, y_train, epochs=EPOCHS)
+
+    # # Evaluate neural network performance
+    # model.evaluate(x_test,  y_test, verbose=2)
+
+    # # Save model to file
+    # if len(sys.argv) == 3:
+    #     filename = sys.argv[2]
+    #     model.save(filename)
+    #     print(f"Model saved to {filename}.")
 
 
-def load_data(data_dir):
+def load_data(data_dir, save_preprocessed=True, preprocessed_filename='preprocessed_data.npz'):
     """
     Load image data from directory `data_dir`.
 
@@ -62,6 +101,12 @@ def load_data(data_dir):
     be a list of integer labels, representing the categories for each of the
     corresponding `images`.
     """
+
+    if os.path.exists(preprocessed_filename):
+        print("Loading preprocessed data from file...")
+        data = np.load(preprocessed_filename)
+        return data['images'], data['labels']
+    
     listOfImages = list()
     listOfLabels = list()
 
@@ -71,14 +116,26 @@ def load_data(data_dir):
         #loop on directory files
         for file in os.listdir(directory):
             file_path = os.path.join(directory, file)
+
             #read image as numpy array and resize it
             img = cv2.imread(file_path)
             img = cv2.resize(img, (IMG_HEIGHT, IMG_HEIGHT))
+
+            # Normalize pixel values to [0, 1]
+            img = img.astype('float32') / 255.0
+            
             listOfImages.append(img)
         
             listOfLabels.append(i)
+
+    images = np.array(listOfImages)
+    labels = np.array(listOfLabels)
+
+    if save_preprocessed:
+        print("Saving preprocessed data to file...")
+        np.savez(preprocessed_filename, images=images, labels=labels)
     
-    return(listOfImages, listOfLabels)
+    return (images, labels)
 
 
 def get_model():
@@ -87,27 +144,24 @@ def get_model():
     `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
-    model = keras.Sequential([
-            keras.Input(shape=(IMG_WIDTH, IMG_WIDTH, 3)),
+    model = keras.Sequential()
 
-            layers.Conv2D(32, (3, 3), activation="relu"),
-            layers.MaxPooling2D(pool_size=(2, 2)),
+    # convolutional block
+    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)))
+    model.add(layers.MaxPooling2D((2, 2)))
+    model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)))
+    model.add(layers.MaxPooling2D((2, 2)))
 
-            layers.Flatten(),
+    # flatten and dense layers
+    model.add(layers.Flatten())
+    model.add(layers.Dense(128, activation='relu'))
+    model.add(layers.Dropout(0.1))
+    model.add(layers.Dense(NUM_CATEGORIES, activation='softmax'))
 
-            layers.Dense(128, activation="relu"),
-            layers.Dense(128, activation="relu"),
-
-            layers.Dropout(0.1),
-
-            layers.Dense(NUM_CATEGORIES)
-    ])
-    
-    model.compile(
-    optimizer="adam",
-    loss="categorical_crossentropy",
-    metrics=["accuracy"]
-)
+    # Compile the model
+    model.compile(optimizer='adam',
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
 
     return model
     
