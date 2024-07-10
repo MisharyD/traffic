@@ -20,8 +20,7 @@ cross validation:<br>
             1 conv with 32 filters and 2,2 pooling layers:<br>
                 1 dense hidden layer with 128 units: got 87% average across all folds 2 times and 97% 2 times. maybe the starting weights of the 87% were not so lucky ?<br>
 
-after asking gpt why it were not stable he suggestedd Normalizing pixel values for images so I did.
-also added : np.random.seed(1) tf.random.set_seed(2)
+#### after asking gpt why it were not stable he suggestedd Normalizing pixel values for images so I did. also added : np.random.seed(1) tf.random.set_seed(2)
 
 Normalize pixel values to [0, 1]:
     cross validation:
@@ -30,11 +29,11 @@ Normalize pixel values to [0, 1]:
                 1 conv with 32 filters and 2,2 pooling layers:
                     1 dense hidden layer with 128 units: siginificant improvmenet with a stable 98% accuracy. 
 
-reason for improvemnet is explained here: https://stackoverflow.com/questions/62111708/what-is-the-significance-of-normalization-of-data-before-feeding-it-to-a-ml-dl-m
+#### reason for improvemnet is explained here: https://stackoverflow.com/questions/62111708/what-is-the-significance-of-normalization-of-data-before-feeding-it-to-a-ml-dl-m
 
 #### From now on, the normilizing of pixel values and 20 epochs is included on all tests 
 
-returning to test without cross validiation for time saving purposes.
+#### returning to test without cross validiation for time saving purposes.
 seeds set:
         0.5 dropout:
             1 conv with 32 filters and 2,2 pooling layers:
@@ -44,7 +43,7 @@ seeds set:
     1 conv with 32 filters and 2,2 pooling layers:
         1 dense hidden layer with 128 units: stable 97% to 98% accuracy.
 
-### Now I will try playing with the layers to reach the 99% accuracy.
+#### Now I will try playing with the layers to reach the 99% accuracy.
 
 0.5 dropout:
     1 conv with 32 filters and 2,2 pooling layers:
